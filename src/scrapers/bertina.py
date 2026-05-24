@@ -50,9 +50,20 @@ def _first_article_href_and_text(html: str) -> Optional[tuple[str, str]]:
     if not article:
         return None
     anchor = article.find("a", href=True)
-    if not anchor:
+    cite = article.find("cite")
+    link_text = ""
+    if anchor:
+        link_text = anchor.get_text(strip=True)
+    elif cite:
+        link_text = cite.get_text(strip=True)
+    url = ""
+    if cite:
+        url = (cite.get("title") or cite.get_text(strip=True) or "").strip()
+    if not url and anchor:
+        url = anchor["href"].strip()
+    if not url:
         return None
-    return anchor["href"], anchor.get_text(strip=True)
+    return url, link_text
 
 
 def search_imdb(raw_filename_stem: str) -> Optional[BertinaImdbResult]:
