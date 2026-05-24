@@ -144,7 +144,6 @@ import sys, os
 _src = '${ESCAPED_DIR}'
 if _src not in sys.path:
     sys.path.insert(0, _src)
-os.chdir(_src)
 from src.main import main
 main()
 WRAPPER_EOF
