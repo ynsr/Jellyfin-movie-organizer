@@ -3,9 +3,11 @@ Tests for src.services.filimo_downloader
 """
 import pytest
 from src.services.filimo_downloader import (
-    _extract_uid,
+    _extract_movie_uid,
+    _extract_series_id,
     _normalize_persian,
     _safe_filename,
+    is_series_input,
     jellyfin_movie_folder,
     select_best_quality,
     FilimoMetadata,
@@ -14,33 +16,78 @@ from src.services.filimo_downloader import (
 
 
 # ---------------------------------------------------------------------------
-# _extract_uid
+# _extract_movie_uid
 # ---------------------------------------------------------------------------
 
-class TestExtractUid:
+class TestExtractMovieUid:
     def test_bare_uid(self):
-        assert _extract_uid("aVmdY") == "aVmdY"
+        assert _extract_movie_uid("aVmdY") == "aVmdY"
 
     def test_short_url(self):
-        assert _extract_uid("https://www.filimo.com/m/aVmdY") == "aVmdY"
+        assert _extract_movie_uid("https://www.filimo.com/m/aVmdY") == "aVmdY"
 
     def test_full_url(self):
         long = (
             "https://www.filimo.com/m/aVmdY"
             "/%D8%AF%D9%88%D8%B1_%D8%AF%D9%86%DB%8C%D8%A7"
         )
-        assert _extract_uid(long) == "aVmdY"
+        assert _extract_movie_uid(long) == "aVmdY"
 
     def test_movie_path(self):
-        assert _extract_uid("https://www.filimo.com/movie/aVmdY/watch") == "aVmdY"
+        assert _extract_movie_uid("https://www.filimo.com/movie/aVmdY/watch") == "aVmdY"
 
     def test_invalid_url_raises(self):
         with pytest.raises(ValueError):
-            _extract_uid("https://www.filimo.com/unknown/path")
+            _extract_movie_uid("https://www.filimo.com/unknown/path")
 
     def test_invalid_string_raises(self):
         with pytest.raises(ValueError):
-            _extract_uid("not a uid or url!!")
+            _extract_movie_uid("not a uid or url!!")
+
+
+# ---------------------------------------------------------------------------
+# _extract_series_id
+# ---------------------------------------------------------------------------
+
+class TestExtractSeriesId:
+    def test_bare_id(self):
+        assert _extract_series_id("99963") == "99963"
+
+    def test_short_url(self):
+        assert _extract_series_id("https://www.filimo.com/n/99963") == "99963"
+
+    def test_tagged_url(self):
+        url = "https://www.filimo.com/tag/drama/n/99963"
+        assert _extract_series_id(url) == "99963"
+
+    def test_invalid_url_raises(self):
+        with pytest.raises(ValueError):
+            _extract_series_id("https://www.filimo.com/m/aVmdY")
+
+    def test_invalid_string_raises(self):
+        with pytest.raises(ValueError):
+            _extract_series_id("not a series id")
+
+
+# ---------------------------------------------------------------------------
+# is_series_input
+# ---------------------------------------------------------------------------
+
+class TestIsSeriesInput:
+    def test_numeric_id_true(self):
+        assert is_series_input("99963") is True
+
+    def test_series_url_true(self):
+        assert is_series_input("https://www.filimo.com/n/99963") is True
+
+    def test_tagged_series_url_true(self):
+        assert is_series_input("https://www.filimo.com/tag/drama/n/99963") is True
+
+    def test_movie_url_false(self):
+        assert is_series_input("https://www.filimo.com/m/aVmdY") is False
+
+    def test_non_url_non_digit_false(self):
+        assert is_series_input("aVmdY") is False
 
 
 # ---------------------------------------------------------------------------
