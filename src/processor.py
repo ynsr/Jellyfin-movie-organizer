@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from src.scrapers.filimo import filimo_search
+from src.scrapers.filimo import search as filimo_search
 from src.services.backdrop import download_backdrop
 from src.services.nfo import generate_nfo
 from src.services.poster import download_poster

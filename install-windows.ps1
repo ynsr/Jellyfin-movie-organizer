@@ -1,4 +1,4 @@
-# install-windows.ps1 — jellyfin-movie-organizer installer for Windows 10/11
+# install-windows.ps1 - jellyfin-movie-organizer installer for Windows 10/11
 # Author: Younes Rahimi
 #
 # Usage:
@@ -28,13 +28,13 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# -- Helpers --------------------------------------------------------------
 
 function Write-Info { param($msg) Write-Host "[jmo] $msg" -ForegroundColor Green  }
 function Write-Warn { param($msg) Write-Host "[jmo] $msg" -ForegroundColor Yellow }
 function Write-Fail { param($msg) Write-Host "[jmo] error: $msg" -ForegroundColor Red; exit 1 }
 
-# ── Defaults ──────────────────────────────────────────────────────────────────
+# -- Defaults -------------------------------------------------------------
 
 if (-not $InstallDir) {
     $InstallDir = Join-Path $env:USERPROFILE "bin"
@@ -45,10 +45,10 @@ $Requirements = Join-Path $ScriptDir "requirements.txt"
 $WrapperCmd   = Join-Path $InstallDir "jmo.cmd"
 $WrapperPy    = Join-Path $InstallDir "jmo_run.py"
 
-# ── Uninstall ─────────────────────────────────────────────────────────────────
+# -- Uninstall ------------------------------------------------------------
 
 if ($Uninstall) {
-    Write-Info "Uninstalling jellyfin-movie-organizer …"
+    Write-Info "Uninstalling jellyfin-movie-organizer..."
 
     foreach ($f in @($WrapperCmd, $WrapperPy)) {
         if (Test-Path $f) {
@@ -71,9 +71,9 @@ if ($Uninstall) {
     exit 0
 }
 
-# ── Verify Python 3.10+ ───────────────────────────────────────────────────────
+# -- Verify Python 3.10+ --------------------------------------------------
 
-Write-Info "Checking Python …"
+Write-Info "Checking Python..."
 $python = $null
 foreach ($candidate in @("python", "python3", "py")) {
     try {
@@ -85,7 +85,7 @@ foreach ($candidate in @("python", "python3", "py")) {
                 Write-Info "Found $candidate : $ver"
                 break
             } else {
-                Write-Warn "$candidate version $ver is below 3.10 — skipping."
+                Write-Warn "$candidate version $ver is below 3.10 - skipping."
             }
         }
     } catch { }
@@ -99,7 +99,7 @@ if (-not $python) {
     )
 }
 
-# ── Verify pip ────────────────────────────────────────────────────────────────
+# -- Verify pip -----------------------------------------------------------
 
 try {
     & $python -m pip --version | Out-Null
@@ -107,7 +107,7 @@ try {
     Write-Fail "pip not found. Run: $python -m ensurepip --upgrade"
 }
 
-# ── Verify source layout ──────────────────────────────────────────────────────
+# -- Verify source layout -------------------------------------------------
 
 if (-not (Test-Path $Requirements)) {
     Write-Fail "requirements.txt not found at $Requirements. Run this script from the project root."
@@ -116,9 +116,9 @@ if (-not (Test-Path (Join-Path $ScriptDir "src\main.py"))) {
     Write-Fail "src\main.py not found. Run this script from the project root."
 }
 
-# ── Install Python dependencies ───────────────────────────────────────────────
+# -- Install Python dependencies -----------------------------------------
 
-Write-Info "Installing Python dependencies …"
+Write-Info "Installing Python dependencies..."
 $alreadyInstalled = & $python -c "import requests, bs4, lxml; print('ok')" 2>$null
 if ($alreadyInstalled -eq "ok") {
     Write-Info "Dependencies already available."
@@ -131,31 +131,32 @@ if ($alreadyInstalled -eq "ok") {
     }
 }
 
-# ── Create install directory ──────────────────────────────────────────────────
+# -- Create install directory --------------------------------------------
 
 if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Path $InstallDir | Out-Null
     Write-Info "Created $InstallDir"
 }
 
-# ── Write wrapper files ───────────────────────────────────────────────────────
+# -- Write wrapper files --------------------------------------------------
 
 if ((Test-Path $WrapperCmd) -and -not $Force) {
     Write-Info "Wrappers already installed (use -Force to reinstall)."
 } else {
-    # jmo.cmd — works from cmd.exe and PowerShell (no need to type 'python')
-    @"
+    # jmo.cmd - works from cmd.exe and PowerShell (no need to type 'python')
+    $cmdContent = @"
 @echo off
 python "%~dp0jmo_run.py" %*
-"@ | Set-Content -Path $WrapperCmd -Encoding ASCII
+"@
+    $cmdContent | Set-Content -Path $WrapperCmd -Encoding ASCII
 
     Write-Info "Created $WrapperCmd"
 
-    # jmo_run.py — embeds the project root so src/ is always importable
+    # jmo_run.py - embeds the project root so src/ is always importable
     $escapedSrc = $ScriptDir.Replace("\", "\\")
-    @"
+    $pyContent = @"
 #!/usr/bin/env python3
-"""jellyfin-movie-organizer (jmo) — installed by install-windows.ps1"""
+"""jellyfin-movie-organizer (jmo) - installed by install-windows.ps1"""
 import sys, os
 _src = r"$escapedSrc"
 if _src not in sys.path:
@@ -163,12 +164,13 @@ if _src not in sys.path:
 os.chdir(_src)
 from src.main import main
 main()
-"@ | Set-Content -Path $WrapperPy -Encoding UTF8
+"@
+    $pyContent | Set-Content -Path $WrapperPy -Encoding UTF8
 
     Write-Info "Created $WrapperPy"
 }
 
-# ── Update user PATH ──────────────────────────────────────────────────────────
+# -- Update user PATH -----------------------------------------------------
 
 $currentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
 if ($currentPath -notlike "*$InstallDir*") {
@@ -180,7 +182,7 @@ if ($currentPath -notlike "*$InstallDir*") {
     Write-Info "$InstallDir is already on user PATH."
 }
 
-# ── Proxy reminder ────────────────────────────────────────────────────────────
+# -- Proxy reminder -------------------------------------------------------
 
 if ($SocksProxy) {
     Write-Host ""
@@ -192,7 +194,7 @@ if ($SocksProxy) {
     Write-Host "=================================================================" -ForegroundColor Cyan
 }
 
-# ── Windows Defender / antivirus note ────────────────────────────────────────
+# -- Windows Defender / antivirus note -----------------------------------
 
 Write-Host ""
 Write-Host "== Windows Note =================================================" -ForegroundColor Cyan
@@ -201,7 +203,7 @@ Write-Host "    $InstallDir"
 Write-Host "  Settings > Windows Security > Virus & threat protection > Exclusions"
 Write-Host "=================================================================" -ForegroundColor Cyan
 
-# ── Done ──────────────────────────────────────────────────────────────────────
+# -- Done ----------------------------------------------------------------
 
 Write-Info ""
 Write-Info "Installation complete!"
