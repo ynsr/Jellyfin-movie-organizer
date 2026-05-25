@@ -1,10 +1,16 @@
-## Task Title: Enhance video file naming by integrating Filimo metadata API
+## Task Title: Fix Filimo metadata matching logic to ignore name mismatches when fetching by ID/UID
 
 ## Task Description:
 
-1. If the video file name contains `[fuid-{SOME_FILIMO_UID}]` which indicates an ID from www.filimo.com, use that uid to
-   fetch metadata from Filimo metadata API directly.  If the video file name doesn't have IMDB ID, and searching IMDB ID via Bertina was not successful, use the fetched english name from Filimo API to search again in Bertina to find the IMDB ID. At last, drop the `[fuid-{SOME_FILIMO_UID}]` from the video file (
-   and other video resources) name and rename the video (and its resources) file accordingly to be Jellyfin-compatible.
+Error while downloading movie/episode metadata from Filimo:
+```
+2026-05-25 05:49:56 [INFO] src.services.renamer — Renamed: Asterix - The Mansions of the Gods (2014) [tmdbid-170522] [fuid-4AB0h].mkv → Asterix - The Mansions of the Gods (2014) [tmdbid-170522].mkv
+2026-05-25 05:49:57 [INFO] src.scrapers.filimo — No Filimo match for: Asterix - The Mansions of the Gods (2014)
+```
+
+The video file name contained `[fuid-4AB0h]` so the app fetched the movie metadata from Filimo API but the names didn't match so it failed. 
+When fetchin the movie/series/episode metadata from Filimo using id or uid, ignore name matching and always accept the response as matched metadata.
+
 
 ## Context:
 
