@@ -76,14 +76,6 @@ def _first_article_href_and_text_matching(html: str, url_filter) -> Optional[tup
             return url, link_text
     return None
 
-
-def _first_article_href_and_text(html: str) -> Optional[tuple[str, str]]:
-    """
-    Parse the first <article> from Bertina results and return (href, link_text).
-    """
-    return _first_article_href_and_text_matching(html, lambda _url: True)
-
-
 def search_imdb(raw_filename_stem: str) -> Optional[BertinaImdbResult]:
     """
     Search Bertina for an IMDB page matching *raw_filename_stem*.
@@ -99,7 +91,7 @@ def search_imdb(raw_filename_stem: str) -> Optional[BertinaImdbResult]:
         logger.error("Bertina IMDB search failed: %s", exc)
         return None
 
-    result = _first_article_href_and_text_matching(response.text, lambda _url: True)
+    result = _first_article_href_and_text_matching(response.text, lambda _url: "imdb.com" in _url)
     if not result:
         logger.warning("No Bertina results for IMDB query: %s", raw_filename_stem)
         return None
