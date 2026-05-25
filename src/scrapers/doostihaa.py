@@ -46,6 +46,21 @@ _META_KEYWORDS = (
     "زیرنویس",
 )
 
+_PLOT_STOP_MARKERS = (
+    "دانلود",
+    "بدون سانسور",
+    "کیفیت",
+    "حجم",
+    "زیرنویس",
+    "برچسب",
+    "ادامه مطلب",
+    "توجه",
+    "درباره ",
+    "صوت دوبله",
+    "لینک",
+    "نسخه ",
+)
+
 
 @dataclass
 class DoostihaaMetadata:
@@ -90,14 +105,26 @@ def _looks_like_metadata(line: str) -> bool:
     return any(keyword in line for keyword in _META_KEYWORDS)
 
 
+def _truncate_plot_line(line: str) -> str:
+    stop_positions = [line.find(marker) for marker in _PLOT_STOP_MARKERS if marker in line]
+    if stop_positions:
+        cut_at = min(pos for pos in stop_positions if pos >= 0)
+        line = line[:cut_at].rstrip()
+    return line
+
+
 def _extract_plot(lines: list[str]) -> str:
     for i, line in enumerate(lines):
         if line.startswith("خلاصه داستان"):
             remainder = line.split(":", 1)[1].strip() if ":" in line else ""
+            remainder = _truncate_plot_line(remainder)
             parts = [remainder] if remainder else []
             for j in range(i + 1, len(lines)):
                 candidate = lines[j]
                 if _looks_like_metadata(candidate):
+                    break
+                candidate = _truncate_plot_line(candidate)
+                if not candidate:
                     break
                 parts.append(candidate)
             return _clean_line(" ".join(parts))

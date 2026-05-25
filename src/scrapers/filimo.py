@@ -15,7 +15,6 @@ Encoding notes (based on real API responses):
     the resulting strings are valid HTTPS URLs and need no further treatment.
 """
 
-import json
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
@@ -108,13 +107,22 @@ def _parse_movie(item: dict) -> Optional[FilimoMovie]:
 
 def _title_similarity(a: str, b: str) -> float:
     """
-    Lightweight word-overlap similarity: fraction of words in *a* found in *b*.
+    Lightweight word-overlap similarity after normalizing punctuation/stopwords.
+
+    Ignores ":", "-", "&", "'", and the token "and" when comparing titles.
     Case-insensitive. Sufficient for movie title matching without extra deps.
     """
     if not a or not b:
         return 0.0
-    words_a = set(a.lower().split())
-    words_b = set(b.lower().split())
+
+    def _words(text: str) -> set[str]:
+        normalized = text.lower()
+        for char in (":", "-", "&","'"):
+            normalized = normalized.replace(char, " ")
+        return {word for word in normalized.split() if word and word != "and"}
+
+    words_a = _words(a)
+    words_b = _words(b)
     if not words_a:
         return 0.0
     return len(words_a & words_b) / len(words_a)
