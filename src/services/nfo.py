@@ -81,7 +81,7 @@ def generate_nfo(
     # ------------------------------------------------------------------ #
     # Populate fields (only fill missing ones)
     # ------------------------------------------------------------------ #
-    _set_if_missing(root, "title", info.name)
+    _set_if_missing(root, "title", filimo_movie.title_fa or info.name)
     _set_if_missing(root, "originaltitle", filimo_movie.title_en or info.name)
     _set_if_missing(root, "sorttitle", info.name)
 
