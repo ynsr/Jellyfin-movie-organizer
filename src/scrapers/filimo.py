@@ -36,6 +36,7 @@ _PERSIAN_DIGIT_TABLE = str.maketrans(
 @dataclass
 class FilimoMovie:
     movie_id: str
+    uid: str
     title_en: str           # movie_title_en  (ASCII/Latin)
     title_fa: str           # movie_title     (Persian Unicode)
     year: str               # pro_year → normalised to ASCII digits
@@ -86,6 +87,7 @@ def _parse_movie(item: dict) -> Optional[FilimoMovie]:
 
         return FilimoMovie(
             movie_id=str(attrs.get("movie_id", "")),
+            uid=str(attrs.get("uid", "")),
             title_en=attrs.get("movie_title_en", ""),
             title_fa=attrs.get("movie_title", ""),       # already decoded Unicode
             year=ascii_year,

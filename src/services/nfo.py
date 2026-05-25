@@ -101,6 +101,15 @@ def generate_nfo(
         uid_el.set("default", "true")
         uid_el.text = info.imdb_id
 
+    # <uniqueid type="filimo">
+    filimo_id_type = "filimo"
+    filimo_existing_uid = root.find(f"uniqueid[@type='{filimo_id_type}']")
+    if filimo_existing_uid is None and filimo_movie.uid:
+        uid_el = ET.SubElement(root, "uniqueid")
+        uid_el.set("type", filimo_id_type)
+        uid_el.set("default", "true")
+        uid_el.text = filimo_movie.uid
+
     _set_if_missing(root, "plot", filimo_movie.description)
     _set_if_missing(root, "rating", filimo_movie.imdb_rate)
 
