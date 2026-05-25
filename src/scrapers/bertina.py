@@ -23,8 +23,8 @@ from src.utils.http_client import get
 
 logger = logging.getLogger(__name__)
 
-_IMDB_TITLE_RE = re.compile(r"imdb\.com/title/(tt\d+)", re.IGNORECASE)
-_IMDB_TITLE_YEAR_RE = re.compile(r"^(.+?)\s*\((\d{4})\)")
+_IMDB_TITLE_RE = re.compile(r"imdb\.com/title/((?:tt|vi)\d+)", re.IGNORECASE)
+_IMDB_TITLE_YEAR_RE = re.compile(r"^(.+?)\s*\((?:\w+ )?(\d{4})\)(?: - [a-zA-Z0-9& ]+)?")
 
 
 @dataclass
@@ -91,7 +91,7 @@ def search_imdb(raw_filename_stem: str) -> Optional[BertinaImdbResult]:
         logger.error("Bertina IMDB search failed: %s", exc)
         return None
 
-    result = _first_article_href_and_text_matching(response.text, lambda _url: "imdb.com" in _url)
+    result = _first_article_href_and_text_matching(response.text, lambda _url: "www.imdb.com" in _url)
     if not result:
         logger.warning("No Bertina results for IMDB query: %s", raw_filename_stem)
         return None
@@ -113,7 +113,7 @@ def search_imdb(raw_filename_stem: str) -> Optional[BertinaImdbResult]:
     imdb_id = id_match.group(1)
 
     # Extract title + year from link text like "Movie Name (2022) - IMDb"
-    clean_text = link_text.replace("- IMDb", "").replace("- IMDb", "").strip()
+    clean_text = link_text.replace("- IMDb", "").strip()
     title_year_match = _IMDB_TITLE_YEAR_RE.match(clean_text)
     if not title_year_match:
         logger.warning("Could not parse title/year from Bertina text: %r", link_text)

@@ -148,7 +148,7 @@ def search(movie_name: str, year: str) -> Optional[FilimoMovie]:
 
     Matching rules:
       1. Year must be within FILIMO_YEAR_TOLERANCE of the target year.
-      2. English title word-overlap score must be ≥ 0.5.
+      2. English title word-overlap score must be ≥ 0.65.
 
     Returns the highest-scoring candidate, or None.
     """
@@ -190,7 +190,7 @@ def search(movie_name: str, year: str) -> Optional[FilimoMovie]:
             "Filimo candidate '%s' (%s) — similarity=%.2f",
             movie.title_en, movie.year, score,
         )
-        if score >= 0.5:
+        if score >= 0.65:
             candidates.append((score, movie))
 
     if not candidates:
