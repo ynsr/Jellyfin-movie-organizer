@@ -33,9 +33,12 @@ def _pretty_xml(root: ET.Element) -> str:
 
 
 def _set_if_missing(parent: ET.Element, tag: str, text: str) -> None:
-    """Add *tag* with *text* to *parent* only if the tag doesn't exist yet."""
+    """Add *tag* with *text* to *parent* only if needed."""
     existing = parent.find(tag)
-    if existing is None and text:
+    normalized_existing = (existing.text or "").strip() if existing is not None else ""
+    normalized_new = text.strip() if text else ""
+
+    if (existing is None or (normalized_existing != normalized_new and tag == "title")) and text:
         el = ET.SubElement(parent, tag)
         el.text = text
 
