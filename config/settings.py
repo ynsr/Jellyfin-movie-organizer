@@ -64,9 +64,9 @@ REQUEST_HEADERS = {
 LOG_DIR = Path("logs")
 LOG_FILE = LOG_DIR / "organizer.log"
 
-MISSED_POSTER_FILE = Path("movies-missed-poster.txt")
-MISSED_BACKDROP_FILE = Path("movies-missed-backdrop.txt")
-MISSED_NFO_FILE = Path("movies-missed-nfo.txt")
+MISSED_POSTER_FILE = LOG_DIR / "movies-missed-poster.txt"
+MISSED_BACKDROP_FILE = LOG_DIR / "movies-missed-backdrop.txt"
+MISSED_NFO_FILE = LOG_DIR / "movies-missed-nfo.txt"
 
 # ---------------------------------------------------------------------------
 # Filimo Downloader
