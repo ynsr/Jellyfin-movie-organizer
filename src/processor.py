@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
+from src.scrapers.doostihaa import fetch_metadata as doostihaa_fetch_metadata
 from src.scrapers.filimo import FilimoMovie, search as filimo_search
 from src.services.backdrop import download_backdrop
 from src.services.nfo import generate_nfo
@@ -126,6 +127,11 @@ def process_movie(
 
     if not filimo_movie:
         filimo_movie = filimo_search(movie_info.name, movie_info.year)
+
+    if not filimo_movie:
+        filimo_movie = doostihaa_fetch_metadata(movie_info.name, movie_info.year)
+        if filimo_movie:
+            logger.info("Using Doostihaa fallback metadata for: %s", movie_info.base_name)
 
     # ------------------------------------------------------------------ #
     # Task 2: Poster
