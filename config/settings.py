@@ -13,7 +13,11 @@ VIDEO_EXTENSIONS: set[str] = {".mkv", ".mp4", ".avi", ".mov", ".wmv", ".flv", ".
 # ---------------------------------------------------------------------------
 # Jellyfin naming helpers
 # ---------------------------------------------------------------------------
-JELLYFIN_MOVIE_PATTERN = r"^(?P<name>.+?) \((?P<year>\d{4})\) \[imdbid-(?P<imdb_id>tt\d+)\](?P<suffix>[^.]*)?$"
+JELLYFIN_MOVIE_PATTERN = (
+    r"^(?P<name>.+?) \((?P<year>\d{4})\) "
+    r"\[(?P<id_type>imdbid|tmdbid)-(?P<id_value>(?:tt\d+|\d+))\]"
+    r"(?P<suffix>[^.]*)?$"
+)
 
 # ---------------------------------------------------------------------------
 # Bertina search engine

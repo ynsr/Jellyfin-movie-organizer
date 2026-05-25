@@ -2,11 +2,12 @@
 Utilities for parsing and building Jellyfin-compatible movie file names.
 
 Jellyfin format:
-    {Movie Name} ({Year}) [imdbid-{ttXXXXXX}]{suffix}.{ext}
+    {Movie Name} ({Year}) [{imdbid|tmdbid}-{id}]{suffix}.{ext}
 
 Example:
     Chickenhare and the Hamster of Darkness (2022) [imdbid-tt12532368].mp4
     Chickenhare and the Hamster of Darkness (2022) [imdbid-tt12532368]-poster.jpg
+    The Batman (2022) [tmdbid-414906].mp4
 """
 
 import re
@@ -24,6 +25,7 @@ class MovieInfo:
     name: str
     year: str
     imdb_id: str
+    id_type: str = "imdb"  # "imdb" | "tmdb"
     suffix: str = ""         # e.g. "-poster", "-backdrop"
     extension: str = ""      # e.g. ".mp4", ".jpg"  (includes leading dot)
 
@@ -32,9 +34,13 @@ class MovieInfo:
     # ------------------------------------------------------------------ #
 
     @property
+    def id_tag(self) -> str:
+        return f"{self.id_type}id"
+
+    @property
     def base_name(self) -> str:
         """Stem without suffix: 'Movie Name (2022) [imdbid-ttXXX]'"""
-        return f"{self.name} ({self.year}) [imdbid-{self.imdb_id}]"
+        return f"{self.name} ({self.year}) [{self.id_tag}-{self.imdb_id}]"
 
     def file_name(self, suffix: str = "", extension: str = "") -> str:
         """Return a full file name, overriding suffix/extension if provided."""
@@ -57,10 +63,13 @@ class MovieInfo:
         m = _JELLYFIN_RE.match(stem)
         if not m:
             return None
+        id_tag = (m.group("id_type") or "imdbid").lower()
+        id_type = id_tag[:-2] if id_tag.endswith("id") else id_tag
         return cls(
             name=m.group("name"),
             year=m.group("year"),
-            imdb_id=m.group("imdb_id"),
+            imdb_id=m.group("id_value"),
+            id_type=id_type,
             suffix=m.group("suffix") or "",
             extension=ext,
         )
@@ -68,8 +77,20 @@ class MovieInfo:
 
 def build_jellyfin_name(name: str, year: str, imdb_id: str, extension: str) -> str:
     """Return the canonical Jellyfin movie file name (with extension)."""
+    return build_jellyfin_name_with_id_type(name, year, imdb_id, extension, id_type="imdb")
+
+
+def build_jellyfin_name_with_id_type(
+    name: str,
+    year: str,
+    id_value: str,
+    extension: str,
+    *,
+    id_type: str = "imdb",
+) -> str:
+    """Return the canonical Jellyfin movie file name (with extension)."""
     ext = extension if extension.startswith(".") else f".{extension}"
-    return f"{name} ({year}) [imdbid-{imdb_id}]{ext}"
+    return f"{name} ({year}) [{id_type}id-{id_value}]{ext}"
 
 
 def is_jellyfin_format(path: Path) -> bool:

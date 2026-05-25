@@ -90,10 +90,11 @@ def generate_nfo(
 
     _set_if_missing(root, "uniqueid", info.imdb_id)
     # <uniqueid type="imdb"> variant that Jellyfin also understands
-    existing_uid = root.find("uniqueid[@type='imdb']")
+    id_type = info.id_type
+    existing_uid = root.find(f"uniqueid[@type='{id_type}']")
     if existing_uid is None:
         uid_el = ET.SubElement(root, "uniqueid")
-        uid_el.set("type", "imdb")
+        uid_el.set("type", id_type)
         uid_el.set("default", "true")
         uid_el.text = info.imdb_id
 

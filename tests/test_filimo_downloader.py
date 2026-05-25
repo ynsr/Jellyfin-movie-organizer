@@ -9,6 +9,7 @@ from src.services.filimo_downloader import (
     _safe_filename,
     is_series_input,
     jellyfin_movie_folder,
+    jellyfin_series_folder,
     select_best_quality,
     FilimoMetadata,
     FilimoStreamOption,
@@ -179,6 +180,34 @@ class TestJellyfinMovieFolder:
         meta = self._meta(title_en="Around the World with Timon & Pumbaa", year="1996")
         assert jellyfin_movie_folder(meta) == "Around the World with Timon & Pumbaa (1996)"
 
+    def test_imdb_tag_added(self):
+        meta = self._meta(title_en="Inception", year="2010")
+        assert jellyfin_movie_folder(meta, imdb_id="tt1375666") == \
+               "Inception (2010) [imdbid-tt1375666]"
+
     def test_falls_back_to_persian(self):
         meta = self._meta(title_fa="تست", year="2020")
         assert "2020" in jellyfin_movie_folder(meta)
+
+
+# ---------------------------------------------------------------------------
+# jellyfin_series_folder
+# ---------------------------------------------------------------------------
+
+class TestJellyfinSeriesFolder:
+    def test_series_imdb_tag(self):
+        meta = FilimoMetadata(
+            uid="123",
+            title_en="The Office",
+            title_fa="",
+            year="2005",
+            imdb_rate="",
+            description_fa="",
+            description_en="",
+            duration_seconds=0,
+            poster_url="",
+            backdrop_url="",
+            content_type="Series",
+        )
+        assert jellyfin_series_folder(meta, imdb_id="tt0386676") == \
+               "The Office (2005) [imdbid-tt0386676]"

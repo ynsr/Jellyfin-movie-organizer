@@ -51,6 +51,8 @@ from urllib.parse import urlparse
 
 import requests
 
+from src.scrapers.bertina import search_imdb
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -514,46 +516,37 @@ def select_best_quality(
 # Jellyfin naming helpers
 # ---------------------------------------------------------------------------
 
+def _imdb_tag(imdb_id: Optional[str]) -> str:
+    return f" [imdbid-{imdb_id}]" if imdb_id else ""
+
+
 def _year_part(year: str) -> str:
     return year[:4] if len(year) >= 4 else year
 
 
-def jellyfin_movie_folder(meta: FilimoMetadata) -> str:
+def jellyfin_movie_folder(meta: FilimoMetadata, imdb_id: Optional[str] = None) -> str:
     title = _safe_filename(meta.title_en or meta.title_fa)
-    return f"{title} ({_year_part(meta.year)})"
+    return f"{title} ({_year_part(meta.year)}){_imdb_tag(imdb_id)}"
 
 
-def jellyfin_base_name(meta: FilimoMetadata) -> str:
-    return jellyfin_movie_folder(meta)
+def jellyfin_base_name(meta: FilimoMetadata, imdb_id: Optional[str] = None) -> str:
+    return jellyfin_movie_folder(meta, imdb_id=imdb_id)
 
 
-def jellyfin_series_folder(meta: FilimoMetadata) -> str:
+def jellyfin_series_folder(meta: FilimoMetadata, imdb_id: Optional[str] = None) -> str:
     title = _safe_filename(meta.title_en or meta.title_fa)
-    return f"{title} ({_year_part(meta.year)})"
+    return f"{title} ({_year_part(meta.year)}){_imdb_tag(imdb_id)}"
 
 
-def jellyfin_season_folder(season_num: int) -> str:
-    return f"Season {season_num:02d}"
-
-
-def jellyfin_episode_base(
-        show_title: str,
-        season_num: int,
-        episode_num: int,
-        episode_title: str = "",
-) -> str:
-    """
-    Returns: '{Show Title} - S01E06 - {Episode Title}'
-    or just:  '{Show Title} - S01E06'  if title is empty.
-    """
-    code = f"S{season_num:02d}E{episode_num:02d}"
-    safe_show = _safe_filename(show_title)
-    safe_ep_title = _safe_filename(episode_title)
-    if safe_ep_title:
-        return f"{safe_show} - {code} - {safe_ep_title}"
-    return f"{safe_show} - {code}"
-
-
+def _lookup_imdb_id(title: str, year: str) -> Optional[str]:
+    query = f"{title} {year}".strip()
+    if not query:
+        return None
+    result = search_imdb(query)
+    if not result:
+        logger.warning("IMDB lookup failed for: %s", query)
+        return None
+    return result.imdb_id
 # ---------------------------------------------------------------------------
 # Resumable video download
 # ---------------------------------------------------------------------------
@@ -898,8 +891,9 @@ def download_movie(
 
     try:
         meta = fetch_metadata(uid, token)
-        folder_name = jellyfin_movie_folder(meta)
-        base_name = jellyfin_base_name(meta)
+        imdb_id = _lookup_imdb_id(meta.title_en or meta.title_fa, meta.year)
+        folder_name = jellyfin_movie_folder(meta, imdb_id=imdb_id)
+        base_name = jellyfin_base_name(meta, imdb_id=imdb_id)
         dest_dir = output_dir / folder_name
         result["folder"] = str(dest_dir)
 
@@ -1033,7 +1027,8 @@ def download_series(
             )
 
         # ── Directory structure ────────────────────────────────────────
-        series_folder = jellyfin_series_folder(show_meta)
+        imdb_id = _lookup_imdb_id(show_meta.title_en or show_meta.title_fa, show_meta.year)
+        series_folder = jellyfin_series_folder(show_meta, imdb_id=imdb_id)
         series_dir = output_dir / series_folder
         result["folder"] = str(series_dir)
 

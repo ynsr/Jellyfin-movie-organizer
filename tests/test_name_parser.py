@@ -8,6 +8,7 @@ from pathlib import Path
 from src.utils.name_parser import (
     MovieInfo,
     build_jellyfin_name,
+    build_jellyfin_name_with_id_type,
     is_jellyfin_format,
     sanitize_movie_name,
 )
@@ -25,6 +26,12 @@ class TestBuildJellyfinName:
     def test_spaces_preserved(self):
         result = build_jellyfin_name("Chickenhare and the Hamster of Darkness", "2022", "tt12532368", ".mp4")
         assert "Chickenhare and the Hamster of Darkness" in result
+
+    def test_tmdb_build(self):
+        result = build_jellyfin_name_with_id_type(
+            "The Batman", "2022", "414906", ".mp4", id_type="tmdb"
+        )
+        assert result == "The Batman (2022) [tmdbid-414906].mp4"
 
 
 class TestIsJellyfinFormat:
@@ -46,6 +53,7 @@ class TestMovieInfoFromFilename:
         assert info.name == "Chickenhare and the Hamster of Darkness"
         assert info.year == "2022"
         assert info.imdb_id == "tt12532368"
+        assert info.id_type == "imdb"
         assert info.extension == ".mp4"
 
     def test_parse_poster_file(self):
