@@ -1,13 +1,10 @@
-## Task Title: IMDB ID Handling and Resource Renaming
-
+## Task Title: Enhance video file naming by integrating Filimo metadata API
 
 ## Task Description:
 
-Tasks:
-1. If the video file name contains `[tmdbid-{SOME_TMDB_ID}]` which indicates an ID from www.themoviedb.org, ignore searching for
-IMDB ID.
-2. If the video file name is in this format: `{MOVIE_OR_SERIES_NAME} ({MOVIE_OR_SERIES_YEAR})` without any ID, if there are any poster, backdrop, or NFO files in the same directory with same name as vidoe file, when the IMDB ID detected, also rename those resources.
-3. When downloading a movie or series from Filimo, search for its IMDB ID and use it in the file or directory name(s) with Jellyfin-compatibility in mind.
+1. If the video file name contains `[fuid-{SOME_FILIMO_UID}]` which indicates an ID from www.filimo.com, use that uid to
+   fetch metadata from Filimo metadata API directly.  If the video file name doesn't have IMDB ID, and searching IMDB ID via Bertina was not successful, use the fetched english name from Filimo API to search again in Bertina to find the IMDB ID. At last, drop the `[fuid-{SOME_FILIMO_UID}]` from the video file (
+   and other video resources) name and rename the video (and its resources) file accordingly to be Jellyfin-compatible.
 
 ## Context:
 
