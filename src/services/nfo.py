@@ -107,7 +107,7 @@ def generate_nfo(
     if filimo_existing_uid is None and filimo_movie.uid:
         uid_el = ET.SubElement(root, "uniqueid")
         uid_el.set("type", filimo_id_type)
-        uid_el.set("default", "true")
+        uid_el.set("default", "false")
         uid_el.text = filimo_movie.uid
 
     _set_if_missing(root, "plot", filimo_movie.description)
