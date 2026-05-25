@@ -15,7 +15,7 @@ VIDEO_EXTENSIONS: set[str] = {".mkv", ".mp4", ".avi", ".mov", ".wmv", ".flv", ".
 # ---------------------------------------------------------------------------
 JELLYFIN_MOVIE_PATTERN = (
     r"^(?P<name>.+?) \((?P<year>\d{4})\) "
-    r"\[(?P<id_type>imdbid|tmdbid)-(?P<id_value>(?:tt\d+|\d+))\]"
+    r"\[(?P<id_type>imdbid|tmdbid)-(?P<id_value>(?:(?:tt|vi)\d+|\d+))\]"
     r"(?P<suffix>[^.]*)?$"
 )
 

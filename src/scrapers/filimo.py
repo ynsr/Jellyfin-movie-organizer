@@ -36,17 +36,17 @@ _PERSIAN_DIGIT_TABLE = str.maketrans(
 class FilimoMovie:
     movie_id: str
     uid: str
-    title_en: str           # movie_title_en  (ASCII/Latin)
-    title_fa: str           # movie_title     (Persian Unicode)
-    year: str               # pro_year → normalised to ASCII digits
-    poster_url: str         # pic.movie_img_b (unescaped HTTPS URL)
-    backdrop_url: str       # cover           (unescaped HTTPS URL)
+    title_en: str  # movie_title_en  (ASCII/Latin)
+    title_fa: str  # movie_title     (Persian Unicode)
+    year: str  # pro_year → normalised to ASCII digits
+    poster_url: str  # pic.movie_img_b (unescaped HTTPS URL)
+    backdrop_url: str  # cover           (unescaped HTTPS URL)
     imdb_rate: str
-    description: str        # descr           (Persian Unicode)
+    description: str  # descr           (Persian Unicode)
     duration_seconds: int
     categories: list[dict] = field(default_factory=list)
     countries: list[dict] = field(default_factory=list)
-    director: str = ""      # director        (Persian Unicode)
+    director: str = ""  # director        (Persian Unicode)
     age_range: str = ""
 
 
@@ -88,16 +88,16 @@ def _parse_movie(item: dict) -> Optional[FilimoMovie]:
             movie_id=str(attrs.get("movie_id", "")),
             uid=str(attrs.get("uid", "")),
             title_en=attrs.get("movie_title_en", ""),
-            title_fa=attrs.get("movie_title", ""),       # already decoded Unicode
+            title_fa=attrs.get("movie_title", ""),  # already decoded Unicode
             year=ascii_year,
             poster_url=poster_url,
             backdrop_url=backdrop_url,
             imdb_rate=str(attrs.get("imdb_rate", "")),
-            description=attrs.get("descr", ""),          # already decoded Unicode
+            description=attrs.get("descr", ""),  # already decoded Unicode
             duration_seconds=int(attrs.get("duration", {}).get("value", 0)),
             categories=attrs.get("categories", []),
             countries=attrs.get("countries", []),
-            director=attrs.get("director", ""),          # already decoded Unicode
+            director=attrs.get("director", ""),  # already decoded Unicode
             age_range=attrs.get("age_range", ""),
         )
     except Exception as exc:
@@ -117,8 +117,10 @@ def _title_similarity(a: str, b: str) -> float:
 
     def _words(text: str) -> set[str]:
         normalized = text.lower()
-        for char in (":", "-", "&","'"):
+        for char in (":", "-", "&", "_", "."):
             normalized = normalized.replace(char, " ")
+        for char in ("'", '"'):
+            normalized = normalized.replace(char, "")
         return {word for word in normalized.split() if word and word != "and"}
 
     words_a = _words(a)

@@ -41,14 +41,10 @@ class BertinaLinkResult:
     title: str
 
 
-def _first_article_href_and_text(html: str) -> Optional[tuple[str, str]]:
+def _article_href_and_text(article) -> Optional[tuple[str, str]]:
     """
-    Parse the first <article> from Bertina results and return (href, link_text).
+    Extract (href, link_text) from a Bertina <article> block.
     """
-    soup = BeautifulSoup(html, "lxml")
-    article = soup.select_one("article")
-    if not article:
-        return None
     anchor = article.find("a", href=True)
     cite = article.find("cite")
     link_text = ""
@@ -66,6 +62,28 @@ def _first_article_href_and_text(html: str) -> Optional[tuple[str, str]]:
     return url, link_text
 
 
+def _first_article_href_and_text_matching(html: str, url_filter) -> Optional[tuple[str, str]]:
+    """
+    Parse Bertina results and return (href, link_text) for the first matching article.
+    """
+    soup = BeautifulSoup(html, "lxml")
+    for article in soup.select("article"):
+        result = _article_href_and_text(article)
+        if not result:
+            continue
+        url, link_text = result
+        if url_filter(url):
+            return url, link_text
+    return None
+
+
+def _first_article_href_and_text(html: str) -> Optional[tuple[str, str]]:
+    """
+    Parse the first <article> from Bertina results and return (href, link_text).
+    """
+    return _first_article_href_and_text_matching(html, lambda _url: True)
+
+
 def search_imdb(raw_filename_stem: str) -> Optional[BertinaImdbResult]:
     """
     Search Bertina for an IMDB page matching *raw_filename_stem*.
@@ -81,7 +99,7 @@ def search_imdb(raw_filename_stem: str) -> Optional[BertinaImdbResult]:
         logger.error("Bertina IMDB search failed: %s", exc)
         return None
 
-    result = _first_article_href_and_text(response.text)
+    result = _first_article_href_and_text_matching(response.text, lambda _url: True)
     if not result:
         logger.warning("No Bertina results for IMDB query: %s", raw_filename_stem)
         return None
@@ -131,15 +149,15 @@ def search_doostihaa(movie_name: str, year: str) -> Optional[BertinaLinkResult]:
         logger.error("Bertina Doostihaa search failed: %s", exc)
         return None
 
-    result = _first_article_href_and_text(response.text)
+    result = _first_article_href_and_text_matching(
+        response.text,
+        lambda url: "doostihaa.com" in url or "doostiha.com" in url,
+    )
     if not result:
         logger.warning("No Bertina Doostihaa results for: %s %s", movie_name, year)
         return None
 
     href, link_text = result
-    if "doostihaa.com" not in href and "doostiha.com" not in href:
-        logger.warning("First Bertina result is not a Doostihaa page: %s", href)
-        return None
 
     logger.info("Bertina Doostihaa → %s", href)
     return BertinaLinkResult(url=href, title=link_text)
