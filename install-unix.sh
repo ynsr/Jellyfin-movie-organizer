@@ -13,7 +13,8 @@
 # What this script does:
 #   1. Verifies Python 3.10+ and pip are available.
 #   2. Installs pip dependencies from requirements.txt (user-level, no venv).
-#   3. Creates an executable wrapper at INSTALL_DIR/jmo (jellyfin-movie-organizer).
+#   3. Creates executable wrappers at INSTALL_DIR/jmo (organizer) and
+#      INSTALL_DIR/jmd (downloader).
 #   4. Optionally appends a PATH export to your shell profile.
 
 set -e
@@ -52,19 +53,22 @@ for arg in "$@"; do
     esac
 done
 
-WRAPPER="${INSTALL_DIR}/jmo"
+WRAPPER_ORGANIZER="${INSTALL_DIR}/jmo"
+WRAPPER_DOWNLOADER="${INSTALL_DIR}/jmd"
 
 # ── Uninstall ─────────────────────────────────────────────────────────────────
 
 if [ "$UNINSTALL" -eq 1 ]; then
     info "Uninstalling jellyfin-movie-organizer …"
 
-    if [ -f "$WRAPPER" ]; then
-        rm -f "$WRAPPER"
-        info "Removed ${WRAPPER}"
-    else
-        warn "No wrapper found at ${WRAPPER}"
-    fi
+    for wrapper in "$WRAPPER_ORGANIZER" "$WRAPPER_DOWNLOADER"; do
+        if [ -f "$wrapper" ]; then
+            rm -f "$wrapper"
+            info "Removed ${wrapper}"
+        else
+            warn "No wrapper found at ${wrapper}"
+        fi
+    done
 
     for profile in "${HOME}/.profile" "${HOME}/.bashrc" "${HOME}/.zshrc"; do
         if [ -f "$profile" ] && grep -qF "$INSTALLER_TAG" "$profile"; then
@@ -132,24 +136,33 @@ fi
 
 # ── Write wrapper script ──────────────────────────────────────────────────────
 
-if [ -f "$WRAPPER" ] && [ "$FORCE" -eq 0 ]; then
-    info "Wrapper already exists at ${WRAPPER} (use --force to reinstall)."
-else
-    # Escape the source dir for embedding in the wrapper
-    ESCAPED_DIR=$(printf '%s' "$SCRIPT_DIR" | sed "s/'/'\\\\''/g")
-    cat > "$WRAPPER" << WRAPPER_EOF
+# Escape the source dir for embedding in the wrapper
+ESCAPED_DIR=$(printf '%s' "$SCRIPT_DIR" | sed "s/'/'\\\\''/g")
+
+write_wrapper() {
+    wrapper="$1"
+    module="$2"
+    label="$3"
+    if [ -f "$wrapper" ] && [ "$FORCE" -eq 0 ]; then
+        info "Wrapper already exists at ${wrapper} (use --force to reinstall)."
+        return
+    fi
+    cat > "$wrapper" << WRAPPER_EOF
 #!/usr/bin/env python3
-"""jellyfin-movie-organizer (jmo) — installed by install-unix.sh"""
+"""${label} — installed by install-unix.sh"""
 import sys, os
 _src = '${ESCAPED_DIR}'
 if _src not in sys.path:
     sys.path.insert(0, _src)
-from src.main import main
+from ${module} import main
 main()
 WRAPPER_EOF
-    chmod +x "$WRAPPER"
-    info "Installed wrapper → ${WRAPPER}"
-fi
+    chmod +x "$wrapper"
+    info "Installed wrapper → ${wrapper}"
+}
+
+write_wrapper "$WRAPPER_ORGANIZER" "src.main" "jellyfin-movie-organizer (jmo)"
+write_wrapper "$WRAPPER_DOWNLOADER" "src.download" "jellyfin-movie-downloader (jmd)"
 
 # ── Update PATH in shell profile ──────────────────────────────────────────────
 
@@ -192,8 +205,9 @@ info ""
 info "Next steps:"
 info "  1. Restart your shell or run: source ${PROFILE}"
 info "  2. Organise a movie directory:  jmo /path/to/movies"
-info "  3. Preview only (dry run):      jmo /path/to/movies --dry-run"
-info "  4. Skip specific tasks:         jmo /path/to/movies --skip-rename --skip-backdrop"
-info "  5. Verbose logs:                jmo /path/to/movies -v"
+info "  3. Download from Filimo:        jmd aVmdY --output /path/to/Movies"
+info "  4. Preview only (dry run):      jmo /path/to/movies --dry-run"
+info "  5. Skip specific tasks:         jmo /path/to/movies --skip-rename --skip-backdrop"
+info "  6. Verbose logs:                jmo /path/to/movies -v"
 info ""
 info "To uninstall: ./install-unix.sh --uninstall"

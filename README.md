@@ -79,6 +79,7 @@ python -m src.main /path/to/movies -v
 ```
 
 If you installed the wrapper, use `jmo` instead of `python -m src.main`.
+For the downloader, use `jmd` instead of `python -m src.download`.
 
 ### Filimo downloader
 
@@ -97,6 +98,8 @@ python -m src.download --batch list.txt --output ~/Media
 # IDM export (creates idm_downloads_<timestamp>.reg)
 python -m src.download 99963 --output ~/TV --idm
 ```
+
+If you installed the wrapper, use `jmd` instead of `python -m src.download`.
 
 Common flags:
 

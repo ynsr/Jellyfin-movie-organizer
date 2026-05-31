@@ -11,7 +11,8 @@
 # What this script does:
 #   1. Verifies Python 3.10+ and pip are available.
 #   2. Installs pip dependencies from requirements.txt (user-level).
-#   3. Creates jmo.cmd + jmo_run.py wrappers so 'jmo' works from any terminal.
+#   3. Creates jmo.cmd/jmo_run.py (organizer) and jmd.cmd/jmd_run.py (downloader)
+#      so commands work from any terminal.
 #   4. Adds the install directory to the user PATH (permanent, no admin needed).
 #
 # Execution policy note (run once if needed):
@@ -42,15 +43,17 @@ if (-not $InstallDir) {
 
 $ScriptDir    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Requirements = Join-Path $ScriptDir "requirements.txt"
-$WrapperCmd   = Join-Path $InstallDir "jmo.cmd"
-$WrapperPy    = Join-Path $InstallDir "jmo_run.py"
+$WrapperCmdOrganizer = Join-Path $InstallDir "jmo.cmd"
+$WrapperPyOrganizer  = Join-Path $InstallDir "jmo_run.py"
+$WrapperCmdDownloader = Join-Path $InstallDir "jmd.cmd"
+$WrapperPyDownloader  = Join-Path $InstallDir "jmd_run.py"
 
 # -- Uninstall ------------------------------------------------------------
 
 if ($Uninstall) {
     Write-Info "Uninstalling jellyfin-movie-organizer..."
 
-    foreach ($f in @($WrapperCmd, $WrapperPy)) {
+    foreach ($f in @($WrapperCmdOrganizer, $WrapperPyOrganizer, $WrapperCmdDownloader, $WrapperPyDownloader)) {
         if (Test-Path $f) {
             Remove-Item $f -Force
             Write-Info "Removed $f"
@@ -140,34 +143,44 @@ if (-not (Test-Path $InstallDir)) {
 
 # -- Write wrapper files --------------------------------------------------
 
-if ((Test-Path $WrapperCmd) -and -not $Force) {
-    Write-Info "Wrappers already installed (use -Force to reinstall)."
-} else {
-    # jmo.cmd - works from cmd.exe and PowerShell (no need to type 'python')
+function Ensure-Wrapper {
+    param(
+        [string]$CmdPath,
+        [string]$PyPath,
+        [string]$Module,
+        [string]$Label
+    )
+
+    if ((Test-Path $CmdPath) -and (Test-Path $PyPath) -and -not $Force) {
+        Write-Info "Wrappers already installed for $Label (use -Force to reinstall)."
+        return
+    }
+
+    $pyLeaf = Split-Path -Leaf $PyPath
     $cmdContent = @"
 @echo off
-python "%~dp0jmo_run.py" %*
+python "%~dp0$pyLeaf" %*
 "@
-    $cmdContent | Set-Content -Path $WrapperCmd -Encoding ASCII
+    $cmdContent | Set-Content -Path $CmdPath -Encoding ASCII
+    Write-Info "Created $CmdPath"
 
-    Write-Info "Created $WrapperCmd"
-
-    # jmo_run.py - embeds the project root so src/ is always importable
     $escapedSrc = $ScriptDir.Replace("\", "\\")
     $pyContent = @"
 #!/usr/bin/env python3
-"""jellyfin-movie-organizer (jmo) - installed by install-windows.ps1"""
+"""$Label - installed by install-windows.ps1"""
 import sys, os
 _src = r"$escapedSrc"
 if _src not in sys.path:
     sys.path.insert(0, _src)
-from src.main import main
+from $Module import main
 main()
 "@
-    $pyContent | Set-Content -Path $WrapperPy -Encoding UTF8
-
-    Write-Info "Created $WrapperPy"
+    $pyContent | Set-Content -Path $PyPath -Encoding UTF8
+    Write-Info "Created $PyPath"
 }
+
+Ensure-Wrapper -CmdPath $WrapperCmdOrganizer -PyPath $WrapperPyOrganizer -Module "src.main" -Label "jellyfin-movie-organizer (jmo)"
+Ensure-Wrapper -CmdPath $WrapperCmdDownloader -PyPath $WrapperPyDownloader -Module "src.download" -Label "jellyfin-movie-downloader (jmd)"
 
 # -- Update user PATH -----------------------------------------------------
 
@@ -210,8 +223,9 @@ Write-Info ""
 Write-Info "Next steps:"
 Write-Info "  1. Restart your terminal (PowerShell or cmd.exe)."
 Write-Info "  2. Organise a movie directory:  jmo C:\Movies"
-Write-Info "  3. Preview only (dry run):      jmo C:\Movies --dry-run"
-Write-Info "  4. Skip specific tasks:         jmo C:\Movies --skip-rename --skip-backdrop"
-Write-Info "  5. Verbose logs:                jmo C:\Movies -v"
+Write-Info "  3. Download from Filimo:        jmd aVmdY --output C:\Movies"
+Write-Info "  4. Preview only (dry run):      jmo C:\Movies --dry-run"
+Write-Info "  5. Skip specific tasks:         jmo C:\Movies --skip-rename --skip-backdrop"
+Write-Info "  6. Verbose logs:                jmo C:\Movies -v"
 Write-Info ""
 Write-Info "To uninstall: .\install-windows.ps1 -Uninstall"
