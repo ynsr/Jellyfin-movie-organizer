@@ -538,6 +538,28 @@ def jellyfin_series_folder(meta: FilimoMetadata, imdb_id: Optional[str] = None) 
     return f"{title} ({_year_part(meta.year)}){_imdb_tag(imdb_id)}"
 
 
+def jellyfin_season_folder(season_num: int) -> str:
+    return f"Season {season_num:02d}"
+
+
+def jellyfin_episode_base(
+        show_title: str,
+        season_num: int,
+        episode_num: int,
+        episode_title: str = "",
+) -> str:
+    """
+    Returns: '{Show Title} - S01E06 - {Episode Title}'
+    or just:  '{Show Title} - S01E06'  if title is empty.
+    """
+    code = f"S{season_num:02d}E{episode_num:02d}"
+    safe_show = _safe_filename(show_title)
+    safe_ep_title = _safe_filename(episode_title)
+    if safe_ep_title:
+        return f"{safe_show} - {code} - {safe_ep_title}"
+    return f"{safe_show} - {code}"
+
+
 def _lookup_imdb_id(title: str, year: str) -> Optional[str]:
     query = f"{title} {year}".strip()
     if not query:

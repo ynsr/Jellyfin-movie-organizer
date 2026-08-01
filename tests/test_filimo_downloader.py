@@ -10,6 +10,8 @@ from src.services.filimo_downloader import (
     is_series_input,
     jellyfin_movie_folder,
     jellyfin_series_folder,
+    jellyfin_episode_base,
+    jellyfin_season_folder,
     select_best_quality,
     FilimoMetadata,
     FilimoStreamOption,
@@ -211,3 +213,28 @@ class TestJellyfinSeriesFolder:
         )
         assert jellyfin_series_folder(meta, imdb_id="tt0386676") == \
                "The Office (2005) [imdbid-tt0386676]"
+
+
+# ---------------------------------------------------------------------------
+# jellyfin_season_folder / jellyfin_episode_base
+# ---------------------------------------------------------------------------
+
+class TestJellyfinSeasonFolder:
+    def test_single_digit_padded(self):
+        assert jellyfin_season_folder(1) == "Season 01"
+
+    def test_double_digit(self):
+        assert jellyfin_season_folder(12) == "Season 12"
+
+
+class TestJellyfinEpisodeBase:
+    def test_with_title(self):
+        assert jellyfin_episode_base("The Office", 1, 6, "The Alliance") == \
+               "The Office - S01E06 - The Alliance"
+
+    def test_without_title(self):
+        assert jellyfin_episode_base("The Office", 2, 3) == "The Office - S02E03"
+
+    def test_sanitizes_show_and_title(self):
+        assert jellyfin_episode_base("Bad:Name", 1, 1, "A:B") == \
+               "BadName - S01E01 - AB"
